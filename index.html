@@ -77,8 +77,9 @@ th{background:#f7f9fd}
     <div class="page-head"><div><h1>Dashboard</h1><p>Supplier balances and account activity</p></div><div class="toolbar"><button id="teamBtn" class="secondary">Manage Team</button><button id="addSupplierBtn">+ Add Supplier</button><button id="addTxnBtn" class="secondary">+ New Transaction</button></div></div>
     <div class="cards">
       <div class="stat"><span>Total Suppliers</span><strong id="supplierCount">0</strong></div>
-      <div class="stat"><span>Total Outstanding</span><strong id="totalOutstanding">LKR 0.00</strong></div>
-      <div class="stat"><span>Transactions</span><strong id="txnCount">0</strong></div>
+      <div class="stat"><span>Total GRN / Purchases</span><strong id="totalGRN">LKR 0.00</strong></div>
+      <div class="stat"><span>Total Payments</span><strong id="totalPayments">LKR 0.00</strong></div>
+      <div class="stat"><span>Outstanding Balance</span><strong id="totalOutstanding">LKR 0.00</strong></div>
     </div>
     <section class="panel">
       <div class="panel-head"><h2>Suppliers</h2><input id="supplierSearch" class="search" placeholder="Search supplier..."></div>
@@ -131,7 +132,9 @@ th{background:#f7f9fd}
   }
   function balance(s){return Number(s.opening_balance||0)+transactions.filter(t=>t.supplier_id===s.id).reduce((sum,t)=>sum+(t.txn_type==='GRN'?Number(t.amount):t.txn_type==='PAYMENT'||t.txn_type==='RETURN'?-Number(t.amount):Number(t.amount)),0)}
   function render(){
-    $('supplierCount').textContent=suppliers.length;$('txnCount').textContent=transactions.length;
+    $('supplierCount').textContent=suppliers.length;
+    $('totalGRN').textContent=money(transactions.filter(t=>t.txn_type==='GRN').reduce((a,t)=>a+Number(t.amount||0),0));
+    $('totalPayments').textContent=money(transactions.filter(t=>t.txn_type==='PAYMENT').reduce((a,t)=>a+Number(t.amount||0),0));
     $('totalOutstanding').textContent=money(suppliers.reduce((a,s)=>a+balance(s),0));
     const q=$('supplierSearch').value.toLowerCase();
     const rows=suppliers.filter(s=>s.supplier_name.toLowerCase().includes(q)||(s.phone||'').toLowerCase().includes(q));
