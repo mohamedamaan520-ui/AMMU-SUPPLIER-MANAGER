@@ -20,11 +20,13 @@
     <h1>AMMU SUPPLIER MANAGER</h1>
     <div class="muted">Online Supplier & Payables Management</div>
     <div class="notice">Sign in to access your company's shared supplier records from any device.</div>
-    <div class="field"><label>Email address</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>
-    <div class="field"><label>Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Enter password"></div>
-    <div class="auth-actions"><button id="signInBtn">Sign In</button><button id="signUpBtn" class="secondary">Create Account</button></div>
-    <button id="forgotBtn" class="ghost" style="width:100%;margin-top:10px">Forgot password?</button>
-    <div id="authMessage" class="muted" style="font-size:13px;margin-top:12px"></div>
+    <form id="authForm" novalidate>
+      <div class="field"><label for="authEmail">Email address</label><input id="authEmail" name="email" type="email" autocomplete="username" required placeholder="you@example.com"></div>
+      <div class="field"><label for="authPassword">Password</label><input id="authPassword" name="password" type="password" autocomplete="current-password" required placeholder="Enter password"></div>
+      <div class="auth-actions"><button id="signInBtn" type="submit">Sign In</button><button id="signUpBtn" type="button" class="secondary">Create Account</button></div>
+      <button id="forgotBtn" type="button" class="ghost" style="width:100%;margin-top:10px">Forgot password?</button>
+      <div id="authMessage" class="muted" role="status" aria-live="polite" style="font-size:13px;margin-top:12px"></div>
+    </form>
   </div>
 </section>
 <section id="appScreen" class="app hidden">
@@ -66,7 +68,7 @@
   function authMsg(msg){$('authMessage').textContent=msg}
   function showAuth(){ $('authScreen').classList.remove('hidden');$('appScreen').classList.add('hidden') }
   function showApp(){ $('authScreen').classList.add('hidden');$('appScreen').classList.remove('hidden');$('userEmail').textContent=sessionUser?.email||'' }
-  async function signIn(){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password)return authMsg('Enter email and password.');authMsg('Signing in...');const {error}=await db.auth.signInWithPassword({email,password});if(error)return authMsg(error.message);await startApp()}
+  async function signIn(){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password)return authMsg('Enter email and password.');authMsg('Signing in...');$('signInBtn').disabled=true;try{const {error}=await db.auth.signInWithPassword({email,password});if(error){console.error('Supabase sign-in error:',{code:error.code,status:error.status,message:error.message});const messages={invalid_credentials:'Email or password is incorrect. If you have not created an account yet, choose Create Account first.',email_not_confirmed:'Please confirm your email using the link sent to your inbox, then sign in.',user_banned:'This account is temporarily disabled. Contact the workspace administrator.',over_request_rate_limit:'Too many login attempts. Please wait a few minutes and try again.'};return authMsg(messages[error.code]||error.message)}await startApp()}catch(e){console.error('Sign-in failed:',e);authMsg(e.message||'Could not sign in. Please try again.')}finally{$('signInBtn').disabled=false}}
   async function signUp(){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||password.length<6)return authMsg('Enter a valid email and password (at least 6 characters).');authMsg('Creating account...');const {data,error}=await db.auth.signUp({email,password});if(error)return authMsg(error.message);if(!data.session){authMsg('Account created. Check your email to confirm, then sign in.');return}await startApp()}
   async function startApp(){const {data:{user},error}=await db.auth.getUser();if(error||!user){showAuth();return}sessionUser=user;showApp();try{await ensureWorkspace();await loadData()}catch(e){toast(e.message||'Could not load workspace');console.error(e)}}
   async function ensureWorkspace(){
@@ -112,7 +114,7 @@
 }
 async function loadInvites(){const target=$('inviteList');if(!target)return;const {data,error}=await db.from('workspace_invites').select('email,created_at,accepted_at').eq('workspace_id',workspace.id).order('created_at',{ascending:false});if(error){target.textContent=error.message;return}target.innerHTML=(data||[]).map(i=>'<div style="padding:8px 0;border-bottom:1px solid #e5eaf2">'+esc(i.email)+' <span class="pill">'+(i.accepted_at?'Joined':'Pending')+'</span></div>').join('')||'No invitations yet.'}
 function supplierHistory(id){const s=suppliers.find(x=>x.id===id);if(!s)return;const list=transactions.filter(t=>t.supplier_id===id);openModal(esc(s.supplier_name),`<div class="notice">Opening balance: <strong>${money(s.opening_balance)}</strong><br>Current balance: <strong>${money(balance(s))}</strong></div><div class="table-wrap"><table style="min-width:500px"><thead><tr><th>Date</th><th>Type</th><th>Reference</th><th>Amount</th></tr></thead><tbody>${list.map(t=>`<tr><td>${esc(t.txn_date)}</td><td>${esc(t.txn_type)}</td><td>${esc(t.reference_no||'—')}</td><td>${money(t.amount)}</td></tr>`).join('')||'<tr><td colspan="4">No transactions yet</td></tr>'}</tbody></table></div>`)}
-  $('signInBtn').onclick=signIn;$('signUpBtn').onclick=signUp;$('signOutBtn').onclick=async()=>{await db.auth.signOut();sessionUser=null;workspace=null;showAuth()};
+  $('authForm').onsubmit=e=>{e.preventDefault();signIn()};$('signUpBtn').onclick=signUp;$('signOutBtn').onclick=async()=>{await db.auth.signOut();sessionUser=null;workspace=null;showAuth()};
   $('forgotBtn').onclick=async()=>{const email=$('authEmail').value.trim();if(!email)return authMsg('Enter your email address first.');const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});authMsg(error?error.message:'Password reset email sent. Check your inbox.')};
   $('addSupplierBtn').onclick=addSupplierModal;$('addTxnBtn').onclick=txnModal;$('teamBtn').onclick=teamModal;$('supplierSearch').oninput=render;
   $('supplierRows').onclick=e=>{const b=e.target.closest('button[data-action="history"]');if(b)supplierHistory(b.dataset.id)};
