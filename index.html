@@ -68,7 +68,7 @@
   function showApp(){ $('authScreen').classList.add('hidden');$('appScreen').classList.remove('hidden');$('userEmail').textContent=sessionUser?.email||'' }
   async function signIn(){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password)return authMsg('Enter email and password.');authMsg('Signing in...');const {error}=await db.auth.signInWithPassword({email,password});if(error)return authMsg(error.message);await startApp()}
   async function signUp(){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||password.length<6)return authMsg('Enter a valid email and password (at least 6 characters).');authMsg('Creating account...');const {data,error}=await db.auth.signUp({email,password});if(error)return authMsg(error.message);if(!data.session){authMsg('Account created. Check your email to confirm, then sign in.');return}await startApp()}
-  async function startApp(){const {data:{user},error}=await db.auth.getUser();if(error||!user){showAuth();return}sessionUser=user;showApp();try{const {error:inviteError}=await db.rpc('accept_my_workspace_invites');if(inviteError)throw inviteError;await ensureWorkspace();await loadData()}catch(e){toast(e.message||'Could not load workspace');console.error(e)}}
+  async function startApp(){const {data:{user},error}=await db.auth.getUser();if(error||!user){showAuth();return}sessionUser=user;showApp();try{await ensureWorkspace();await loadData()}catch(e){toast(e.message||'Could not load workspace');console.error(e)}}
   async function ensureWorkspace(){
     const {data:members,error}=await db.from('workspace_members').select('workspace_id,role').eq('user_id',sessionUser.id).limit(1);
     if(error)throw error;
