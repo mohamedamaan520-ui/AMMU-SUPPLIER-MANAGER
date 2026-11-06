@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>AMMU SUPPLIER MANAGER</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.0"></script>
+<style>
+:root{--bg:#f3f6fb;--panel:#fff;--ink:#172033;--muted:#68758b;--line:#e5eaf2;--brand:#255be8;--brand2:#1744bd;--green:#13865b;--red:#c63d4d;--shadow:0 12px 35px #17203312}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,Segoe UI,Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer;border:0;border-radius:10px;padding:11px 16px;background:var(--brand);color:white;font-weight:650}button:hover{background:var(--brand2)}button.secondary{background:#edf2ff;color:#244fc2}button.danger{background:#fff0f1;color:var(--red)}button.ghost{background:transparent;color:var(--muted)}.hidden{display:none!important}
+.auth-wrap{min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(circle at 15% 15%,#dce7ff,transparent 34%),radial-gradient(circle at 85% 85%,#d8f6ed,transparent 32%),#f5f7fc}.auth-card{width:min(440px,100%);background:#fff;border:1px solid #e7ecf5;border-radius:24px;padding:34px;box-shadow:0 25px 80px #1a2d5018}.brand-mark{width:48px;height:48px;border-radius:15px;background:linear-gradient(135deg,#3468f4,#142f87);display:grid;place-items:center;color:#fff;font-weight:900;font-size:19px}.auth-card h1{font-size:25px;margin:18px 0 4px}.muted{color:var(--muted)}.field{display:grid;gap:6px;margin:14px 0}.field label{font-size:13px;font-weight:700;color:#4a566d}.field input,.field select,.field textarea,.search{width:100%;border:1px solid #dce3ef;border-radius:10px;padding:12px 13px;background:#fff;color:#172033;outline:none}.field input:focus,.field select:focus,.search:focus{border-color:#6c8df1;box-shadow:0 0 0 3px #255be817}.auth-actions{display:flex;gap:10px;align-items:center;margin-top:18px}.auth-actions button{flex:1}.app{min-height:100vh}.topbar{height:72px;background:#111c31;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 max(22px,calc((100vw - 1240px)/2));gap:18px}.top-brand{display:flex;align-items:center;gap:12px}.top-brand .brand-mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#4c7cff,#2450d5)}.top-brand strong{display:block;letter-spacing:.3px}.top-brand small{color:#aab7ce}.top-actions{display:flex;align-items:center;gap:12px}.top-actions button{background:#24334e;color:#e9efff}.user-email{font-size:13px;color:#c2cde0}.container{max-width:1240px;margin:auto;padding:28px 22px 60px}.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:15px;margin-bottom:22px}.page-head h1{font-size:26px;margin:0}.page-head p{margin:4px 0 0;color:var(--muted)}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow)}.stat span{font-size:13px;color:var(--muted)}.stat strong{display:block;font-size:25px;margin-top:5px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);margin:16px 0;overflow:hidden}.panel-head{padding:17px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.panel-head h2{font-size:16px;margin:0}.panel-body{padding:18px 20px}.toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.toolbar .search{max-width:330px}.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:650px}th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--line);white-space:nowrap}th{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:#758198;background:#fafbfe}td{font-size:14px}.amount{font-variant-numeric:tabular-nums;font-weight:700}.positive{color:var(--green)}.negative{color:var(--red)}.pill{display:inline-block;padding:4px 9px;border-radius:99px;background:#eef3ff;color:#3158bd;font-size:12px;font-weight:700}.empty{padding:35px;text-align:center;color:var(--muted)}.modal-backdrop{position:fixed;inset:0;background:#0d172b80;display:grid;place-items:center;padding:16px;z-index:5}.modal{width:min(560px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;box-shadow:0 30px 90px #0003}.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)}.modal-head h2{font-size:18px;margin:0}.modal-body{padding:8px 22px 22px}.modal-foot{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}.notice{padding:11px 13px;border-radius:10px;background:#eff5ff;color:#3154a6;font-size:13px;margin:12px 0}.toast{position:fixed;right:20px;bottom:20px;background:#14213a;color:white;padding:13px 17px;border-radius:12px;box-shadow:var(--shadow);z-index:10;max-width:min(400px,calc(100vw - 40px))}.footer{text-align:center;color:#8b96a9;font-size:12px;padding:20px}
+@media(max-width:760px){.topbar{height:auto;min-height:68px;padding:12px 16px}.user-email{display:none}.container{padding:20px 14px 40px}.cards{grid-template-columns:1fr}.page-head{align-items:flex-start;flex-direction:column}.panel-head,.panel-body{padding:15px}.auth-card{padding:26px}.top-brand strong{font-size:13px}.top-brand small{font-size:11px}}
+</style>
+</head>
+<body>
+<section id="authScreen" class="auth-wrap">
+  <div class="auth-card">
+    <div class="brand-mark">A</div>
+    <h1>AMMU SUPPLIER MANAGER</h1>
+    <div class="muted">Online Supplier & Payables Management</div>
+    <div class="notice">Sign in to access your company's shared supplier records from any device.</div>
+    <div class="field"><label>Email address</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>
+    <div class="field"><label>Password</label><input id="authPassword" type="password" autocomplete="current-password" placeholder="Enter password"></div>
+    <div class="auth-actions"><button id="signInBtn">Sign In</button><button id="signUpBtn" class="secondary">Create Account</button></div>
+    <button id="forgotBtn" class="ghost" style="width:100%;margin-top:10px">Forgot password?</button>
+    <div id="authMessage" class="muted" style="font-size:13px;margin-top:12px"></div>
+  </div>
+</section>
+<section id="appScreen" class="app hidden">
+  <header class="topbar">
+    <div class="top-brand"><div class="brand-mark">A</div><div><strong>AMMU SUPPLIER MANAGER</strong><small>Shared company workspace</small></div></div>
+    <div class="top-actions"><span id="userEmail" class="user-email"></span><button id="signOutBtn">Logout</button></div>
+  </header>
+  <main class="container">
+    <div class="page-head"><div><h1>Dashboard</h1><p>Supplier balances and account activity</p></div><div class="toolbar"><button id="addSupplierBtn">+ Add Supplier</button><button id="addTxnBtn" class="secondary">+ New Transaction</button></div></div>
+    <div class="cards">
+      <div class="stat"><span>Total Suppliers</span><strong id="supplierCount">0</strong></div>
+      <div class="stat"><span>Total Outstanding</span><strong id="totalOutstanding">LKR 0.00</strong></div>
+      <div class="stat"><span>Transactions</span><strong id="txnCount">0</strong></div>
+    </div>
+    <section class="panel">
+      <div class="panel-head"><h2>Suppliers</h2><input id="supplierSearch" class="search" placeholder="Search supplier..."></div>
+      <div class="table-wrap"><table><thead><tr><th>Supplier</th><th>Phone</th><th>Opening Balance</th><th>Current Balance</th><th>Added</th><th></th></tr></thead><tbody id="supplierRows"></tbody></table></div>
+      <div id="supplierEmpty" class="empty">No suppliers yet. Add your first supplier to get started.</div>
+    </section>
+    <section class="panel">
+      <div class="panel-head"><h2>Recent Transactions</h2><span class="muted" style="font-size:12px">Latest 20 entries</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Date</th><th>Supplier</th><th>Type</th><th>Reference</th><th>Amount</th><th>Note</th></tr></thead><tbody id="txnRows"></tbody></table></div>
+      <div id="txnEmpty" class="empty">Transactions will appear here.</div>
+    </section>
+    <div class="footer">© AMMU SUPPLIER MANAGER · Online shared data</div>
+  </main>
+</section>
+<div id="modalRoot"></div><div id="toast" class="toast hidden"></div>
+<script>
+(() => {
+  const SUPABASE_URL = 'https://qoiokfbpwzptgrlxfwoy.supabase.co';
+  const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_90H4CzJaAJ6UhnadC3nhFw_1zhSDr-l';
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+  const $ = id => document.getElementById(id);
+  let sessionUser = null, workspace = null, suppliers = [], transactions = [];
+  const money = n => 'LKR ' + Number(n || 0).toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2});
+  const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  function toast(msg){$('toast').textContent=msg;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),3200)}
+  function authMsg(msg){$('authMessage').textContent=msg}
+  function showAuth(){ $('authScreen').classList.remove('hidden');$('appScreen').classList.add('hidden') }
+  function showApp(){ $('authScreen').classList.add('hidden');$('appScreen').classList.remove('hidden');$('userEmail').textContent=sessionUser?.email||'' }
+  async function signIn(){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||!password)return authMsg('Enter email and password.');authMsg('Signing in...');const {error}=await db.auth.signInWithPassword({email,password});if(error)return authMsg(error.message);await startApp()}
+  async function signUp(){const email=$('authEmail').value.trim(),password=$('authPassword').value;if(!email||password.length<6)return authMsg('Enter a valid email and password (at least 6 characters).');authMsg('Creating account...');const {data,error}=await db.auth.signUp({email,password});if(error)return authMsg(error.message);if(!data.session){authMsg('Account created. Check your email to confirm, then sign in.');return}await startApp()}
+  async function startApp(){const {data:{user},error}=await db.auth.getUser();if(error||!user){showAuth();return}sessionUser=user;showApp();try{await ensureWorkspace();await loadData()}catch(e){toast(e.message||'Could not load workspace');console.error(e)}}
+  async function ensureWorkspace(){
+    const {data:members,error}=await db.from('workspace_members').select('workspace_id,role').eq('user_id',sessionUser.id).limit(1);
+    if(error)throw error;
+    if(members?.length){const {data,error:e}=await db.from('workspaces').select('*').eq('id',members[0].workspace_id).single();if(e)throw e;workspace=data;return}
+    const {data:owned,error:oe}=await db.from('workspaces').select('*').eq('owner_id',sessionUser.id).limit(1);
+    if(oe)throw oe;
+    if(owned?.length){workspace=owned[0];const {error:me}=await db.from('workspace_members').upsert({workspace_id:workspace.id,user_id:sessionUser.id,role:'admin'});if(me)throw me;return}
+    const {data:created,error:ce}=await db.from('workspaces').insert({name:'AMMU SUPPLIER MANAGER',owner_id:sessionUser.id}).select().single();if(ce)throw ce;
+    workspace=created;
+    const {error:me}=await db.from('workspace_members').insert({workspace_id:workspace.id,user_id:sessionUser.id,role:'admin'});if(me)throw me;
+  }
+  async function loadData(){
+    if(!workspace)throw new Error('No workspace membership found. Ask the workspace admin to add your account.');
+    const [{data:s,error:se},{data:t,error:te}]=await Promise.all([
+      db.from('suppliers').select('*').eq('workspace_id',workspace.id).order('supplier_name'),
+      db.from('supplier_transactions').select('*').eq('workspace_id',workspace.id).order('txn_date',{ascending:false}).order('created_at',{ascending:false})
+    ]);
+    if(se)throw se;if(te)throw te;suppliers=s||[];transactions=t||[];render();
+  }
+  function balance(s){return Number(s.opening_balance||0)+transactions.filter(t=>t.supplier_id===s.id).reduce((sum,t)=>sum+(t.txn_type==='GRN'?Number(t.amount):t.txn_type==='PAYMENT'||t.txn_type==='RETURN'?-Number(t.amount):Number(t.amount)),0)}
+  function render(){
+    $('supplierCount').textContent=suppliers.length;$('txnCount').textContent=transactions.length;
+    $('totalOutstanding').textContent=money(suppliers.reduce((a,s)=>a+balance(s),0));
+    const q=$('supplierSearch').value.toLowerCase();
+    const rows=suppliers.filter(s=>s.supplier_name.toLowerCase().includes(q)||(s.phone||'').toLowerCase().includes(q));
+    $('supplierRows').innerHTML=rows.map(s=>`<tr><td><strong>${esc(s.supplier_name)}</strong></td><td>${esc(s.phone||'—')}</td><td class="amount">${money(s.opening_balance)}</td><td class="amount ${balance(s)>=0?'':'negative'}">${money(balance(s))}</td><td>${new Date(s.created_at).toLocaleDateString()}</td><td><button class="ghost" data-action="history" data-id="${s.id}">Details</button></td></tr>`).join('');
+    $('supplierEmpty').classList.toggle('hidden',rows.length>0);
+    const names=Object.fromEntries(suppliers.map(s=>[s.id,s.supplier_name]));
+    $('txnRows').innerHTML=transactions.slice(0,20).map(t=>`<tr><td>${esc(t.txn_date)}</td><td>${esc(names[t.supplier_id]||'Supplier')}</td><td><span class="pill">${esc(t.txn_type)}</span></td><td>${esc(t.reference_no||'—')}</td><td class="amount">${money(t.amount)}</td><td>${esc(t.note||'—')}</td></tr>`).join('');
+    $('txnEmpty').classList.toggle('hidden',transactions.length>0);
+  }
+  function openModal(title,body){$('modalRoot').innerHTML=`<div class="modal-backdrop" id="backdrop"><div class="modal"><div class="modal-head"><h2>${title}</h2><button class="ghost" id="modalClose">✕</button></div><div class="modal-body">${body}</div></div></div>`;$('modalClose').onclick=closeModal;$('backdrop').onclick=e=>{if(e.target.id==='backdrop')closeModal()}}
+  function closeModal(){$('modalRoot').innerHTML=''}
+  function addSupplierModal(){openModal('Add Supplier',`<form id="supplierForm"><div class="field"><label>Supplier name *</label><input name="supplier_name" required maxlength="120" placeholder="Supplier name"></div><div class="field"><label>Phone</label><input name="phone" placeholder="Phone number"></div><div class="field"><label>Address</label><textarea name="address" rows="2" placeholder="Address"></textarea></div><div class="field"><label>Opening balance (LKR)</label><input name="opening_balance" type="number" min="0" step="0.01" value="0"></div><div class="field"><label>Notes</label><textarea name="notes" rows="2"></textarea></div><div class="modal-foot"><button type="button" class="secondary" id="cancelModal">Cancel</button><button type="submit">Save Supplier</button></div></form>`);$('cancelModal').onclick=closeModal;$('supplierForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);const payload={workspace_id:workspace.id,supplier_name:String(f.get('supplier_name')).trim(),phone:String(f.get('phone')||'').trim()||null,address:String(f.get('address')||'').trim()||null,opening_balance:Number(f.get('opening_balance')||0),notes:String(f.get('notes')||'').trim()||null,created_by:sessionUser.id};const {error}=await db.from('suppliers').insert(payload);if(error){toast(error.message);return}closeModal();await loadData();toast('Supplier saved successfully')}}
+  function txnModal(){if(!suppliers.length){toast('First add a supplier');return}openModal('New Supplier Transaction',`<form id="txnForm"><div class="field"><label>Supplier *</label><select name="supplier_id" required>${suppliers.map(s=>`<option value="${s.id}">${esc(s.supplier_name)}</option>`).join('')}</select></div><div class="field"><label>Transaction type *</label><select name="txn_type"><option value="GRN">Purchase / GRN (increase payable)</option><option value="PAYMENT">Payment (reduce payable)</option><option value="RETURN">Purchase Return (reduce payable)</option><option value="ADJUSTMENT">Adjustment (increase payable)</option></select></div><div class="field"><label>Date *</label><input name="txn_date" type="date" required value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Amount (LKR) *</label><input name="amount" type="number" min="0.01" step="0.01" required></div><div class="field"><label>Reference number</label><input name="reference_no"></div><div class="field"><label>Note</label><textarea name="note" rows="2"></textarea></div><div class="modal-foot"><button type="button" class="secondary" id="cancelModal">Cancel</button><button type="submit">Save Transaction</button></div></form>`);$('cancelModal').onclick=closeModal;$('txnForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);const payload={workspace_id:workspace.id,supplier_id:f.get('supplier_id'),txn_type:f.get('txn_type'),txn_date:f.get('txn_date'),amount:Number(f.get('amount')),reference_no:String(f.get('reference_no')||'').trim()||null,note:String(f.get('note')||'').trim()||null,created_by:sessionUser.id};const {error}=await db.from('supplier_transactions').insert(payload);if(error){toast(error.message);return}closeModal();await loadData();toast('Transaction saved')}}
+  function supplierHistory(id){const s=suppliers.find(x=>x.id===id);if(!s)return;const list=transactions.filter(t=>t.supplier_id===id);openModal(esc(s.supplier_name),`<div class="notice">Opening balance: <strong>${money(s.opening_balance)}</strong><br>Current balance: <strong>${money(balance(s))}</strong></div><div class="table-wrap"><table style="min-width:500px"><thead><tr><th>Date</th><th>Type</th><th>Reference</th><th>Amount</th></tr></thead><tbody>${list.map(t=>`<tr><td>${esc(t.txn_date)}</td><td>${esc(t.txn_type)}</td><td>${esc(t.reference_no||'—')}</td><td>${money(t.amount)}</td></tr>`).join('')||'<tr><td colspan="4">No transactions yet</td></tr>'}</tbody></table></div>`)}
+  $('signInBtn').onclick=signIn;$('signUpBtn').onclick=signUp;$('signOutBtn').onclick=async()=>{await db.auth.signOut();sessionUser=null;workspace=null;showAuth()};
+  $('forgotBtn').onclick=async()=>{const email=$('authEmail').value.trim();if(!email)return authMsg('Enter your email address first.');const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});authMsg(error?error.message:'Password reset email sent. Check your inbox.')};
+  $('addSupplierBtn').onclick=addSupplierModal;$('addTxnBtn').onclick=txnModal;$('supplierSearch').oninput=render;
+  $('supplierRows').onclick=e=>{const b=e.target.closest('button[data-action="history"]');if(b)supplierHistory(b.dataset.id)};
+  db.auth.onAuthStateChange((_event,session)=>{if(session?.user&&!sessionUser){setTimeout(startApp,0)}else if(!session){sessionUser=null;workspace=null;showAuth()}});
+  db.auth.getSession().then(({data})=>{if(data.session)startApp()});
+})();
+</script>
+</body>
+</html>
