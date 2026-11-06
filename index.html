@@ -33,7 +33,7 @@
     <div class="top-actions"><span id="userEmail" class="user-email"></span><button id="signOutBtn">Logout</button></div>
   </header>
   <main class="container">
-    <div class="page-head"><div><h1>Dashboard</h1><p>Supplier balances and account activity</p></div><div class="toolbar"><button id="addSupplierBtn">+ Add Supplier</button><button id="addTxnBtn" class="secondary">+ New Transaction</button></div></div>
+    <div class="page-head"><div><h1>Dashboard</h1><p>Supplier balances and account activity</p></div><div class="toolbar"><button id="teamBtn" class="secondary">Manage Team</button><button id="addSupplierBtn">+ Add Supplier</button><button id="addTxnBtn" class="secondary">+ New Transaction</button></div></div>
     <div class="cards">
       <div class="stat"><span>Total Suppliers</span><strong id="supplierCount">0</strong></div>
       <div class="stat"><span>Total Outstanding</span><strong id="totalOutstanding">LKR 0.00</strong></div>
@@ -59,7 +59,7 @@
   const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_90H4CzJaAJ6UhnadC3nhFw_1zhSDr-l';
   const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
   const $ = id => document.getElementById(id);
-  let sessionUser = null, workspace = null, suppliers = [], transactions = [];
+  let sessionUser = null, workspace = null, currentRole = 'user', suppliers = [], transactions = [];
   const money = n => 'LKR ' + Number(n || 0).toLocaleString('en-LK',{minimumFractionDigits:2,maximumFractionDigits:2});
   const esc = s => String(s ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   function toast(msg){$('toast').textContent=msg;$('toast').classList.remove('hidden');setTimeout(()=>$('toast').classList.add('hidden'),3200)}
@@ -72,12 +72,12 @@
   async function ensureWorkspace(){
     const {data:members,error}=await db.from('workspace_members').select('workspace_id,role').eq('user_id',sessionUser.id).limit(1);
     if(error)throw error;
-    if(members?.length){const {data,error:e}=await db.from('workspaces').select('*').eq('id',members[0].workspace_id).single();if(e)throw e;workspace=data;return}
+    if(members?.length){currentRole=members[0].role;const {data,error:e}=await db.from('workspaces').select('*').eq('id',members[0].workspace_id).single();if(e)throw e;workspace=data;return}
     const {data:owned,error:oe}=await db.from('workspaces').select('*').eq('owner_id',sessionUser.id).limit(1);
     if(oe)throw oe;
-    if(owned?.length){workspace=owned[0];const {error:me}=await db.from('workspace_members').upsert({workspace_id:workspace.id,user_id:sessionUser.id,role:'admin'});if(me)throw me;return}
+    if(owned?.length){workspace=owned[0];currentRole='admin';const {error:me}=await db.from('workspace_members').upsert({workspace_id:workspace.id,user_id:sessionUser.id,role:'admin'});if(me)throw me;return}
     const {data:created,error:ce}=await db.from('workspaces').insert({name:'AMMU SUPPLIER MANAGER',owner_id:sessionUser.id}).select().single();if(ce)throw ce;
-    workspace=created;
+    workspace=created;currentRole='admin';
     const {error:me}=await db.from('workspace_members').insert({workspace_id:workspace.id,user_id:sessionUser.id,role:'admin'});if(me)throw me;
   }
   async function loadData(){
@@ -104,10 +104,17 @@
   function closeModal(){$('modalRoot').innerHTML=''}
   function addSupplierModal(){openModal('Add Supplier',`<form id="supplierForm"><div class="field"><label>Supplier name *</label><input name="supplier_name" required maxlength="120" placeholder="Supplier name"></div><div class="field"><label>Phone</label><input name="phone" placeholder="Phone number"></div><div class="field"><label>Address</label><textarea name="address" rows="2" placeholder="Address"></textarea></div><div class="field"><label>Opening balance (LKR)</label><input name="opening_balance" type="number" min="0" step="0.01" value="0"></div><div class="field"><label>Notes</label><textarea name="notes" rows="2"></textarea></div><div class="modal-foot"><button type="button" class="secondary" id="cancelModal">Cancel</button><button type="submit">Save Supplier</button></div></form>`);$('cancelModal').onclick=closeModal;$('supplierForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);const payload={workspace_id:workspace.id,supplier_name:String(f.get('supplier_name')).trim(),phone:String(f.get('phone')||'').trim()||null,address:String(f.get('address')||'').trim()||null,opening_balance:Number(f.get('opening_balance')||0),notes:String(f.get('notes')||'').trim()||null,created_by:sessionUser.id};const {error}=await db.from('suppliers').insert(payload);if(error){toast(error.message);return}closeModal();await loadData();toast('Supplier saved successfully')}}
   function txnModal(){if(!suppliers.length){toast('First add a supplier');return}openModal('New Supplier Transaction',`<form id="txnForm"><div class="field"><label>Supplier *</label><select name="supplier_id" required>${suppliers.map(s=>`<option value="${s.id}">${esc(s.supplier_name)}</option>`).join('')}</select></div><div class="field"><label>Transaction type *</label><select name="txn_type"><option value="GRN">Purchase / GRN (increase payable)</option><option value="PAYMENT">Payment (reduce payable)</option><option value="RETURN">Purchase Return (reduce payable)</option><option value="ADJUSTMENT">Adjustment (increase payable)</option></select></div><div class="field"><label>Date *</label><input name="txn_date" type="date" required value="${new Date().toISOString().slice(0,10)}"></div><div class="field"><label>Amount (LKR) *</label><input name="amount" type="number" min="0.01" step="0.01" required></div><div class="field"><label>Reference number</label><input name="reference_no"></div><div class="field"><label>Note</label><textarea name="note" rows="2"></textarea></div><div class="modal-foot"><button type="button" class="secondary" id="cancelModal">Cancel</button><button type="submit">Save Transaction</button></div></form>`);$('cancelModal').onclick=closeModal;$('txnForm').onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target);const payload={workspace_id:workspace.id,supplier_id:f.get('supplier_id'),txn_type:f.get('txn_type'),txn_date:f.get('txn_date'),amount:Number(f.get('amount')),reference_no:String(f.get('reference_no')||'').trim()||null,note:String(f.get('note')||'').trim()||null,created_by:sessionUser.id};const {error}=await db.from('supplier_transactions').insert(payload);if(error){toast(error.message);return}closeModal();await loadData();toast('Transaction saved')}}
-  function supplierHistory(id){const s=suppliers.find(x=>x.id===id);if(!s)return;const list=transactions.filter(t=>t.supplier_id===id);openModal(esc(s.supplier_name),`<div class="notice">Opening balance: <strong>${money(s.opening_balance)}</strong><br>Current balance: <strong>${money(balance(s))}</strong></div><div class="table-wrap"><table style="min-width:500px"><thead><tr><th>Date</th><th>Type</th><th>Reference</th><th>Amount</th></tr></thead><tbody>${list.map(t=>`<tr><td>${esc(t.txn_date)}</td><td>${esc(t.txn_type)}</td><td>${esc(t.reference_no||'—')}</td><td>${money(t.amount)}</td></tr>`).join('')||'<tr><td colspan="4">No transactions yet</td></tr>'}</tbody></table></div>`)}
+  function teamModal(){
+  if(currentRole!=='admin'){toast('Only workspace admins can manage team members');return}
+  openModal('Manage Team Members','<div class="notice">Invite a new user by email. They must create their account using the same email address to join this shared workspace automatically.</div><form id="inviteForm"><div class="field"><label>Member email address *</label><input name="email" type="email" required placeholder="staff@example.com"></div><div class="modal-foot"><button type="submit">Send Workspace Invite</button></div></form><div style="margin-top:22px"><strong>Invitations</strong><div id="inviteList" class="muted" style="font-size:13px;margin-top:8px">Loading...</div></div>');
+  $('inviteForm').onsubmit=async e=>{e.preventDefault();const email=new FormData(e.target).get('email').trim().toLowerCase();const {error}=await db.from('workspace_invites').upsert({workspace_id:workspace.id,email,invited_by:sessionUser.id,role:'user'},{onConflict:'workspace_id,email'});if(error){toast(error.message);return}e.target.reset();toast('Invitation saved. Ask the member to create an account with this email.');loadInvites()};
+  loadInvites();
+}
+async function loadInvites(){const target=$('inviteList');if(!target)return;const {data,error}=await db.from('workspace_invites').select('email,created_at,accepted_at').eq('workspace_id',workspace.id).order('created_at',{ascending:false});if(error){target.textContent=error.message;return}target.innerHTML=(data||[]).map(i=>'<div style="padding:8px 0;border-bottom:1px solid #e5eaf2">'+esc(i.email)+' <span class="pill">'+(i.accepted_at?'Joined':'Pending')+'</span></div>').join('')||'No invitations yet.'}
+function supplierHistory(id){const s=suppliers.find(x=>x.id===id);if(!s)return;const list=transactions.filter(t=>t.supplier_id===id);openModal(esc(s.supplier_name),`<div class="notice">Opening balance: <strong>${money(s.opening_balance)}</strong><br>Current balance: <strong>${money(balance(s))}</strong></div><div class="table-wrap"><table style="min-width:500px"><thead><tr><th>Date</th><th>Type</th><th>Reference</th><th>Amount</th></tr></thead><tbody>${list.map(t=>`<tr><td>${esc(t.txn_date)}</td><td>${esc(t.txn_type)}</td><td>${esc(t.reference_no||'—')}</td><td>${money(t.amount)}</td></tr>`).join('')||'<tr><td colspan="4">No transactions yet</td></tr>'}</tbody></table></div>`)}
   $('signInBtn').onclick=signIn;$('signUpBtn').onclick=signUp;$('signOutBtn').onclick=async()=>{await db.auth.signOut();sessionUser=null;workspace=null;showAuth()};
   $('forgotBtn').onclick=async()=>{const email=$('authEmail').value.trim();if(!email)return authMsg('Enter your email address first.');const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});authMsg(error?error.message:'Password reset email sent. Check your inbox.')};
-  $('addSupplierBtn').onclick=addSupplierModal;$('addTxnBtn').onclick=txnModal;$('supplierSearch').oninput=render;
+  $('addSupplierBtn').onclick=addSupplierModal;$('addTxnBtn').onclick=txnModal;$('teamBtn').onclick=teamModal;$('supplierSearch').oninput=render;
   $('supplierRows').onclick=e=>{const b=e.target.closest('button[data-action="history"]');if(b)supplierHistory(b.dataset.id)};
   db.auth.onAuthStateChange((_event,session)=>{if(session?.user&&!sessionUser){setTimeout(startApp,0)}else if(!session){sessionUser=null;workspace=null;showAuth()}});
   db.auth.getSession().then(({data})=>{if(data.session)startApp()});
